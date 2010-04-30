@@ -20,7 +20,8 @@ copyright = """
     along with rattlekekz.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import subprocess
+import os
+from twisted.internet import reactor
 
 class plugin:
     def __init__(self,controller,model,view):
@@ -30,11 +31,21 @@ class plugin:
         self.view = view
         self.model.hiThere(self.name,self)
         self.controller.botMsg("[blinklight-plugin]",self.view.hiThere(self.name,self)[2])
+        self.lightpath = "/proc/acpi/ibm/light"
+        try:
+            self.lighthandle = open(self.lightpath, "r+")
+        except:
+            self.controller.botMsg("[blinklight-plugin]", "Could not load plugin, no thinklight device found")
+            self.unload()
         
-
     def unload(self):
+        try:
+            self.lighthandle.close()
+        except:
+            pass
         self.view.outHere(self.name,self)
         self.model.outHere(self.name,self)
+        self.controller.botMsg("[blinklight-plugin]", "plugin unloaded")
 
     def receivedMsg(self, caller, nick, room, message):
         if (self.controller.nickpattern.search(message) is not None) and (self.controller.nickname != nick):
@@ -45,7 +56,26 @@ class plugin:
             self.blinklight()
 
     def blinklight(self):
-        try:
-            subprocess.Popen(["blinklight", "3", "0.1"])
-        except:
-            pass
+        on = self.is_on()
+        self.blink(not on, 3)
+
+    def is_on(self):
+        self.lighthandle.seek(0) 
+        lines = self.lighthandle.readlines()
+        for line in lines:
+            if line.startswith("status"):
+                if line.split()[1] == "on":
+                    return True
+                else:
+                    return False
+        return False
+
+    def blink(self, on = True, times = 0):
+        if on:
+            x = "on"
+        else:
+            x = "off"
+        self.lighthandle.write(x)
+        self.lighthandle.flush()
+        if times > 0:
+            reactor.callLater(0.1, lambda: self.blink(not on, times-1))
