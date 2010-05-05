@@ -3,12 +3,11 @@
 from distutils.core import setup
 
 setup(name='rattlekekz-plugins',
-      version='0.1',
+      version='20100505',
       author="rattlekekz Team",
       author_email="egg@spam.de",
       packages=['rattlekekz', 'rattlekekz.plugins'],
       #scripts=['bin/blinklight'],
-      requires=['twisted(>=8.1.0)','urwid','simplejson','OpenSSL'],
-      url="http://kekz.net/",
+      url="http://github.com/Jem777/rattlekekz-plugins",
       license="GPL v3 or higher"
      )
